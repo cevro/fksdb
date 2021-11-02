@@ -1568,11 +1568,11 @@ CREATE TABLE IF NOT EXISTS `warehouse_item`
 
 CREATE TABLE IF NOT EXISTS `person_relation`
 (
-    `relation_id`      INT(11)                    NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    `from_person_id`   INT(11)                    NOT NULL,
-    `to_person_id`     INT(11)                    NOT NULL,
-    `level`            ENUM (1,2,3,4,'undefined') NOT NULL,
-    `last_interaction` DATETIME                   NULL DEFAULT NULL,
+    `relation_id`    INT(11)                    NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    `from_person_id` INT(11)                    NOT NULL,
+    `to_person_id`   INT(11)                    NOT NULL,
+    `level`          ENUM (1,2,3,4) NOT NULL,
+    `note`           TEXT                       NULL DEFAULT NULL,
     CONSTRAINT `relation_con_1`
         FOREIGN KEY (`from_person_id`)
             REFERENCES `person` (`person_id`)

@@ -7,6 +7,7 @@ namespace FKSDB\Modules\OrgModule;
 use FKSDB\Components\Charts\Contestants\AggregatedSeriesChart;
 use FKSDB\Components\Charts\Contestants\PerSeriesChart;
 use FKSDB\Components\Charts\Contestants\PerYearsChart;
+use FKSDB\Components\Charts\Relations\PersonRelationChart;
 use FKSDB\Components\Charts\TotalPersonsChart;
 use FKSDB\Modules\Core\PresenterTraits\ChartPresenterTrait;
 
@@ -37,6 +38,7 @@ class ChartPresenter extends BasePresenter
             'totalContestantsPerSeries' => new AggregatedSeriesChart($this->getContext(), $this->getSelectedContest()),
             'contestantsPerYears' => new PerYearsChart($this->getContext(), $this->getSelectedContest()),
             'totalPersons' => new TotalPersonsChart($this->getContext()),
+            'relations' => new PersonRelationChart($this->getContext(), 'person-relation'),
         ];
     }
 
