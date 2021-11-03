@@ -16,6 +16,7 @@ import { eventSchedule } from 'FKSDB/Components/Forms/Controls/Schedule/Schedule
 import Attendance from 'FKSDB/Models/FrontEnd/apps/events/attendance/Index';
 import { appsLoader } from 'FKSDB/Models/FrontEnd/Loader/Loader';
 import * as React from 'react';
+import PersonRelationChart from 'FKSDB/Components/Charts/Relations/PersonRelationChart';
 
 appsLoader.register(eventSchedule);
 
@@ -40,6 +41,7 @@ appsLoader.hashMapLoader.registerDataComponent('chart.events.participants.time-g
 appsLoader.hashMapLoader.registerDataComponent('chart.events.teams.geo', TeamsGeoChart);
 appsLoader.hashMapLoader.registerDataComponent('chart.events.teams.time-progress', CommonChart, {accessKey: 'teams'});
 appsLoader.hashMapLoader.registerDataComponent('chart.events.application-ratio.geo', ApplicationRationGeoChart);
+appsLoader.hashMapLoader.registerDataComponent('chart.person-relation', PersonRelationChart);
 
 appsLoader.hashMapLoader.registerComponent('attendance.qr-code', Attendance);
 

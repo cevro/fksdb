@@ -38,7 +38,7 @@ class ChartPresenter extends BasePresenter
             'totalContestantsPerSeries' => new AggregatedSeriesChart($this->getContext(), $this->getSelectedContest()),
             'contestantsPerYears' => new PerYearsChart($this->getContext(), $this->getSelectedContest()),
             'totalPersons' => new TotalPersonsChart($this->getContext()),
-            'relations' => new PersonRelationChart($this->getContext(), 'person-relation'),
+            'relations' => new PersonRelationChart($this->getContext()),
         ];
     }
 
