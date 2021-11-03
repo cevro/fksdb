@@ -9,24 +9,22 @@ import {
 } from 'd3-force';
 import * as React from 'react';
 
-interface Data {
-    created: string;
+interface Link extends SimulationLinkDatum<Node> {
+    from: number;
+    to: number;
+    level: number | null;
+}
+
+interface Node extends SimulationNodeDatum {
+    name: string;
     gender: 'M' | 'F';
-    personId: number;
 }
 
 interface OwnProps {
     data: {
-        links: Array<{
-            from: number;
-            to: number;
-            level: number | null;
-        } & SimulationLinkDatum<SimulationNodeDatum>>;
+        links: Link[];
         nodes: {
-            [key: number]: {
-                name: string;
-                gender: 'M' | 'F';
-            } & SimulationNodeDatum;
+            [key: number]: Node;
         };
     };
 }
@@ -52,41 +50,108 @@ export default class PersonRelationChart extends React.Component<OwnProps, {}> {
             link.source = nodes[link.from];
             link.target = nodes[link.to];
         });
-        this.simulation = forceSimulation(simNodes)
-            .force('link', forceLink(links))
-            .force('charge', forceManyBody().strength(-150))
+        this.simulation = forceSimulation<Node>(simNodes)
+            .force('link', forceLink(links).distance(() => 60))
+            .force('charge', forceManyBody().strength(-175))
             .force('x', forceX())
-            .force('y', forceY());
+            .force('y', forceY())
+            .alphaMin(0);
 
         const nodesElements = [];
 
         for (const key in nodes) {
             if (nodes.hasOwnProperty(key)) {
                 const person = nodes[key];
-                nodesElements.push(<g fill="currentColor" strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      transform={'translate(' + person.x + ',' + person.y + ')'}>
-                    <circle stroke={person.gender === 'M' ? 'blue' : 'pink'} r="4"
-                            strokeWidth="1.5"/>
-                    <text x="8" y="0.31rem" fontSize=".5rem">
-                        {person.name}
-                    </text>
-                </g>);
+                const color = person.gender === 'M' ? '#2196F3' : '#E91E63';
+                nodesElements.push(
+                    <g fill="currentColor"
+                       key={key}
+                       strokeLinecap="round"
+                       onClick={() => {
+                           if (person.fx === 0) {
+                               person.fx = null;
+                               person.fy = null;
+                           } else {
+                               person.fx = 0;
+                               person.fy = 0;
+                           }
+                       }}
+                       strokeLinejoin="round"
+                       transform={'translate(' + person.x + ',' + person.y + ')'}>
+                        <circle
+                            stroke="none"
+                            fill={color}
+                            r="7.5"
+                        />
+                        <text x="8" y="0.31rem" fontSize=".5rem" fontWeight="bold" fill={color}>
+                            {person.name}
+                        </text>
+                    </g>,
+                );
             }
         }
 
         return <div className="row">
             <div className="col-9">
                 <svg viewBox="-600 -400 1200 800">
+                    <defs>
+                        {[0, 1, 2, 3, 4].map((level) => {
+                            return <marker
+                                key={level}
+                                viewBox="-5 0 10 10"
+                                id={'arrow-end-' + level}
+                                refX="10"
+                                refY="5"
+                                markerWidth="10"
+                                markerHeight="10"
+                                orient="auto"
+                            >
+                                <path
+                                    d="M 5 5 L -2 2 L -2 8 z"
+                                    fill={this.getColorByMeta(level)}
+                                    stroke="none"
+                                />
+                            </marker>;
+                        })}
+                        {[0, 1, 4].map((level) => {
+                                return <marker
+                                    key={level}
+                                    viewBox="-5 0 10 10"
+                                    id={'arrow-start-' + level}
+                                    refX="-10"
+                                    refY="5"
+                                    markerWidth="10"
+                                    markerHeight="10"
+                                    orient="auto"
+                                >
+                                    <path
+                                        d="M -5 5 L 2 2 L 2 8 z"
+                                        fill={this.getColorByMeta(level)}
+                                        stroke="none"
+                                    />
+                                </marker>;
+                            },
+                        )}
+                    </defs>
                     <g fill="none" strokeWidth="1.5">{links.map((item, index) => {
-                        const r = Math.sqrt(Math.pow(item.target.x - item.source.x, 2) + Math.pow(item.target.y - item.source.y, 2)) / 2;
+
+                        if (item.level === 1 || item.level === 4 || !item.level) {
+                            return <path
+                                key={index}
+                                stroke={this.getColorByMeta(item.level)}
+                                strokeDasharray={(item.target.gender === item.source.gender) ? '5,5' : 'none'}
+                                d={`M ${item.source.x} ${item.source.y} L ${item.target.x} ${item.target.y}`}
+                                markerEnd={`url(#arrow-end-${item.level})`}
+                                markerStart={`url(#arrow-start-${item.level})`}/>;
+                        }
+                        const r = Math.hypot(item.target.x - item.source.x, item.target.y - item.source.y);
                         const rot = Math.atan((item.target.y - item.source.y) / (item.target.x - item.source.x)) * 180 / Math.PI;
-                        return <path stroke={this.getColorByMeta(item.level)}
-                                     strokeDasharray={(item.target.gender === item.source.gender) ? '5,5' : 'none'}
-                                     d={
-                                         'M ' + item.source.x + ' ' + item.source.y +
-                                         ((item.level === 2 || item.level === 3) ? (' A ' + (r) + ' ' + r / 5 + ' ' + rot + ' 0 1 ' + item.target.x + ' ' + item.target.y) : '') +
-                                         ' L ' + item.target.x + ' ' + item.target.y}/>;
+                        return <path
+                            key={index}
+                            stroke={this.getColorByMeta(item.level)}
+                            strokeDasharray={(item.target.gender === item.source.gender) ? '5,5' : 'none'}
+                            d={`M ${item.source.x} ${item.source.y} A ${r} ${r} ${rot} 0 1 ${item.target.x} ${item.target.y}`}
+                            markerEnd={`url(#arrow-end-${item.level})`}/>;
                     })}</g>
                     <g>
                         {nodesElements}
@@ -94,61 +159,22 @@ export default class PersonRelationChart extends React.Component<OwnProps, {}> {
                 </svg>
             </div>
         </div>;
-        // Per-type markers, as they don't inherit styles.
-        /*     svg.append('defs')
-                 .selectAll('marker')
-                 .data(types)
-                 .join('marker')
-                 .attr('id', (d) => `arrow-${d}`)
-                 .attr('viewBox', '0 -5 10 10')
-                 .attr('refX', 15)
-                 .attr('refY', -0.5)
-                 .attr('markerWidth', 6)
-                 .attr('markerHeight', 6)
-                 .attr('orient', 'auto')
-                 .append('path')
-                 .attr('fill', color)
-                 .attr('d', 'M0,-5L10,0L0,5');
-
-             const node =
-
-
-
-             node.append(
-
-             simulation.on('tick', () => {
-                 link.attr('d', linkArc);
-                 node.attr('transform', (d) => `translate(${d.x},${d.y})`);
-             });
-
-             invalidation.then(() => simulation.stop());
-
-             return svg.node();*/
-        return null; /*<ChartContainer
-            chart={LineChart}
-            chartProps={{
-                data: lineChartData,
-                display: {xGrid: true, yGrid: true},
-                xScale,
-                yScale,
-            }}
-            legendComponent={LineChartLegend}
-            legendProps={{data: lineChartData}}
-        />;*/
     }
 
     private getColorByMeta(meta: number): string {
         switch (meta) {
             case 1:
-                return 'green';
+                return '#4CAF50';
             case 2:
-                return 'orange';
+                return '#FFEB3B';
             case 3:
-                return 'red';
+                return '#FF5722';
             case 4:
-                return 'violet';
+                return '#9C27B0';
+            case 5:
+                return '#2196F3';
             default:
-                return '#ccc';
+                return '#9E9E9E';
         }
     }
 }
